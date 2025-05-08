@@ -38,8 +38,8 @@ class testerComm:
     crc   is the hex representation of the 32-bit checksum of the message body
     '''
     def __init__(self, comm_dev:str, baud:int=115200, timeout:float=0.5) -> None:
-        self.__version: str = "1.0.0"
-        self.__failReason: str = ""
+        self._version: str = "1.0.0"
+        self._failReason: str = ""
 
         self.comm_dev: str = comm_dev
 
@@ -53,13 +53,13 @@ class testerComm:
         self.port.dtr = False
         self.port.rts = False
 
-    def __fail(self, mesg:str, dbug:bool=False) -> None:
+    def _fail(self, mesg:str, dbug:bool=False) -> None:
         '''Set fail reason string and, if debug is enabled, print it'''
-        self.__failReason = mesg
+        self._failReason = mesg
         if dbug:
             print(mesg)
 
-    def __debug(self, mesg:str, dbug:bool=False) -> None:
+    def _debug(self, mesg:str, dbug:bool=False) -> None:
         '''If debug is enabled, print message to the console'''
         if dbug:
             print(mesg)
@@ -77,10 +77,10 @@ class testerComm:
             except:
                 print(r, end="")
 
-    def __send_mesg(self, hdr:str, body:str, dbug:bool=False) -> bool:
+    def _send_mesg(self, hdr:str, body:str, dbug:bool=False) -> bool:
         '''Send a message to the unit under test'''
         if self.port is None:
-            self.__fail(f"'{self.comm_dev}' is not open", dbug=dbug)
+            self._fail(f"'{self.comm_dev}' is not open", dbug=dbug)
             return False
 
         hdr = hdr.encode("UTF-8")
@@ -101,11 +101,11 @@ class testerComm:
             self.port.write(msg)
             self.port.flush()
         except Exception as e:
-            self.__fail(f"Failed to write to serial port: {e}", dbug=dbug)
+            self._fail(f"Failed to write to serial port: {e}", dbug=dbug)
             return False
         return True
 
-    def __recv_mesg(self, timeout:float=5, dbug:bool=False) -> tuple|None:
+    def _recv_mesg(self, timeout:float=5, dbug:bool=False) -> tuple|None:
         '''Receive a message from the unit under test'''
         hdr = b""
         body = b""
@@ -147,7 +147,7 @@ class testerComm:
                     hdr += r
                 else:
                     # Invalid character
-                    self.__debug(f"Invalid header character ({r}) received", dbug=dbug)
+                    self._debug(f"Invalid header character ({r}) received", dbug=dbug)
                     state = 0
             elif 2 == state:
                 # Receiving message body
@@ -169,7 +169,7 @@ class testerComm:
                     body += r
                 else:
                     # Invalid character
-                    self.__debug(f"Invalid body character ({r}) received", dbug=dbug)
+                    self._debug(f"Invalid body character ({r}) received", dbug=dbug)
                     state = 0
             elif 3 == state:
                 # Receiving CRC
@@ -201,7 +201,7 @@ class testerComm:
 
                     # Compare the CRCs
                     if msgCrc != calcCrc:
-                        self.__debug(f"msgCrc: {msgCrc:08x}, calcCrc: {calcCrc:08x}", dbug=dbug)
+                        self._debug(f"msgCrc: {msgCrc:08x}, calcCrc: {calcCrc:08x}", dbug=dbug)
                         return None
                     return hdr.decode("UTF-8"), body.decode("UTF-8")
                 elif r.lower() in b"0123456789abcdef":
@@ -209,20 +209,20 @@ class testerComm:
                     crc += r.lower()
                 else:
                     # Invalid character
-                    self.__debug(f"Invalid CRC character ({r}) received", dbug=dbug)
+                    self._debug(f"Invalid CRC character ({r}) received", dbug=dbug)
                     state = 0
 
         # Timed out
-        self.__debug("Timed out waiting for response", dbug=dbug)
+        self._debug("Timed out waiting for response", dbug=dbug)
         return None
 
     def version(self) -> str:
         '''Return script version'''
-        return self.__version
+        return self._version
 
     def fail_reason(self) -> str:
         '''Return reason for most recent failure'''
-        return self.__failReason
+        return self._failReason
 
     def open(self, dbug:bool=False) -> bool:
         '''open the serial port'''
@@ -232,9 +232,9 @@ class testerComm:
         try:
             self.port.open()
         except Exception as e:
-            self.__fail(f"Failed to open {self.comm_dev}: {e}", dbug=dbug)
+            self._fail(f"Failed to open {self.comm_dev}: {e}", dbug=dbug)
             return False
-        self.__failReason = ""
+        self._failReason = ""
         return self.port.is_open
 
     def close(self) -> None:
@@ -261,8 +261,8 @@ class testerComm:
         # Apply mutex in case multiple threads are operating
         with self.mutex:
             self.port.reset_input_buffer()
-            self.__send_mesg("CMD", msg, dbug=dbug)
-            resp = self.__recv_mesg(timeout=timeout, dbug=dbug)
+            self._send_mesg("CMD", msg, dbug=dbug)
+            resp = self._recv_mesg(timeout=timeout, dbug=dbug)
 
         #print(f"recvMesg: {resp}")
         if resp is None:
@@ -274,23 +274,23 @@ class testerComm:
             try:
                 r = json.loads(body)
             except:
-                self.__fail("Response not proper JSON", dbug=dbug)
-                self.__debug(body, dbug=dbug)
+                self._fail("Response not proper JSON", dbug=dbug)
+                self._debug(body, dbug=dbug)
                 return None
             if 'result' in r:
                 return r['result']
             elif 'error' in r:
                 e = r['error']
-                self.__fail(f"Command error - code: {e['code']}, mesg: {e['message']}", dbug=dbug)
+                self._fail(f"Command error - code: {e['code']}, mesg: {e['message']}", dbug=dbug)
                 return None
             else:
-                self.__fail(f"Unexpected data: {body}", dbug=dbug)
+                self._fail(f"Unexpected data: {body}", dbug=dbug)
                 return None
         elif "ERR" == hdr:
-            self.__fail(f"Remote error: {body}", dbug=dbug)
+            self._fail(f"Remote error: {body}", dbug=dbug)
             return None
         else:
-            self.__fail(f"Unexpected header: '{hdr}'", dbug=dbug)
+            self._fail(f"Unexpected header: '{hdr}'", dbug=dbug)
             return None
 
     def command_no_resp(self, cmd:str, params:dict=None, timeout=2.0, dbug:bool=False) -> bool:

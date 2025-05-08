@@ -4,7 +4,7 @@ class gpioControl:
     '''
     Communicate with the fixture CPU to set and get IO pin states
     '''
-    def __init__(self, fix_api:testerApi, gpio_map:list[dict[str, int, str, bool]]=None) -> None:
+    def __init__(self, fix_api:testerApi, gpio_map:list[dict]=None) -> None:
 
         '''
         gpio_map is a list of dictionaries each of the form
@@ -15,10 +15,11 @@ class gpioControl:
 
     def initialize(self, dbug:bool=False) -> bool:
         '''Configure the controller GPIO pins per the GPIO map'''
+        item: dict = dict()
         for item in self.gpio_map:
             gpio_num: int = item['gpio_num']
             # set initial state inactive
-            istate: bool = not item['active_hi']
+            istate: bool = not item.get('active_hi', False)
             if not self.gpio_pin_conf(gpio_num, item['dir'], istate, False, False, dbug=dbug):
                 print(f"Failed to configure GPIO {gpio_num}")
                 return False
@@ -75,6 +76,9 @@ class gpioControl:
         desc: dict = self._find_gpio_desc(name)
         if desc is None:
             return False
+        if desc['dir'] != "out":
+            print(f"Attempting output on '{name}' which is configured as input")
+            return False
         gpio_num: int = desc['gpio_num']
         set_high: bool = active if desc['active_hi'] else not active
         return self.gpio_pin_set(gpio_num, set_high, dbug=dbug)
@@ -83,7 +87,10 @@ class gpioControl:
         '''Helper function to read a channel GPIO pin by name'''
         desc: dict = self._find_gpio_desc(name)
         if desc is None:
-            return False
+            return None
+        if desc['dir'] != "in":
+            print(f"Attempting input on '{name}' which is configured as output")
+            return None
         gpio_num: int = desc['gpio_num']
         # Get GPIO pin high/low state
         is_high: bool = self.gpio_pin_get(gpio_num, dbug=dbug)
