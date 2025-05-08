@@ -8,6 +8,22 @@ This repo provides libraries supporting control of the board relays, connecting 
 ## board firmware
 This firmware is built for the ESP32-S3 DevKitC-N16R8 module which is currently used in the relay board fixture and will eventually be part of the GRID45 Gang Programmer fixture.
 
+The firmware provides a serial communication interface consisting of a commamd/response sequence. The messaging is framed using ASCII control characters. The test_comm Python library implements the host-side of this protocol.
+
+Functions provided by the firmware command interface include:
+- set baud rate
+- reboot firmware
+- echo test
+- get firmware version
+- set/get board configuration
+- scan for BLE SSIDs
+- scan for Wi-Fi access points
+- connect to Wi-Fi access point
+- perform HTTP POST and GET operations with a remote target
+- configure GPIO pins
+- read GPIO inputs
+- write GPIO outputs
+
 ## relay_lib
 A Python package of libraries for the relay board
 
