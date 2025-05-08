@@ -76,15 +76,18 @@ class methods:
 This provides two classes: testerComm provides low-level serial message exchange with the board CPU while testerAPI is a child class that builds on this, providing core-level functions in the board CPU.
 
 class testerComm<br/>
-open : Open the serial connection
-close : Close the serial connection
-command : Send a command, receive the response, and return response data
-command_no_resp : Send a command and return True on success, False on failure. Use for commands that do not return data
-spy : Receive and print serial from the board CPU. Used to capture out-of-band transmissions for debugging purposes.
-version : Return the version of the class library
-fail_reason : Return the reason for the most recent failure
-reset : Perform a hard reset of the board CPU by toggling the RTS line
-set_local_baud : Change the baud rate of the local end of the serial connection
+Low-level message exchange with host PC.
+
+class methods:
+- open : Open the serial connection
+- close : Close the serial connection
+- command : Send a command, receive the response, and return response data
+- command_no_resp : Send a command and return True on success, False on failure. Use for - commands that do not return data
+- spy : Receive and print serial from the board CPU. Used to capture out-of-band transmissions for debugging purposes.
+- version : Return the version of the class library
+- fail_reason : Return the reason for the most recent failure
+- reset : Perform a hard reset of the board CPU by toggling the RTS line
+- set_local_baud : Change the baud rate of the local end of the serial connection
 
 class testerAPI<br/>
 This provides an API to basic functions provided by the firmware on the board CPU. Board-specific functions will be provided by other libraries such as gpioControl and wifiComm.
