@@ -1,7 +1,7 @@
 #
 import sys
-import signal
 from time import sleep
+from argparse import ArgumentParser
 
 sys.path.append("relay_lib")
 from relay_lib.test_comm import testerApi
@@ -9,9 +9,6 @@ from relay_lib.relay_control import relayControl
 
 sys.path.append("app_lib")
 from relay_lib.app_utils import list_comm_devices, get_usb_sn
-
-def sig_handler(signum, frame):
-    sys.exit(0)
 
 def fix_setup(tty_dev:str) -> testerApi|None:
     '''Initialize communication with the fixture'''
@@ -58,12 +55,9 @@ def fix_setup(tty_dev:str) -> testerApi|None:
     return fix
 
 def main() -> int:
-    print("Test relay board")
+    print("Configure the relay board")
 
-    signal.signal(signal.SIGINT, sig_handler)
-
-    # Check for attached relay fixture
-    # ESP32-S3 DevKit board
+    # Check for attached board (ESP32-S3 DevKit)
     dev_vid = 0x1a86
     dev_pid = 0x55d3
     fix_devs: list[str] = list_comm_devices(vid=dev_vid, pid=dev_pid)
@@ -75,33 +69,39 @@ def main() -> int:
         print(f"Too many ({num_fix}) test fixtures found, must be 1")
         return 1
 
-    tty_dev: str = fix_devs[0]
+    comm_dev: str = fix_devs[0]
     dev_sn = get_usb_sn(dev_vid, dev_pid)[0]
 
-    print(f"Found fixture at '{tty_dev}', serial number: '{dev_sn}'")
+    print(f"Found fixture at '{comm_dev}', serial number: '{dev_sn}'")
+
+    argp = ArgumentParser()
+    argp.add_argument("--unit_sn", type=str, required=True, help="Serial number to assign board")
+    args = argp.parse_args()
 
     # Set up communication with the fixture
-    relay_board: testerApi = fix_setup(tty_dev)
+    relay_board: testerApi = fix_setup(comm_dev)
     if relay_board is None:
         return 1
 
     # Set up relay control
     relay_ctrl: relayControl = relayControl(relay_board)
 
-    board_params = relay_ctrl.params_get()
-    print(f"{board_params = }")
+    # Read current parameters from board
+    board_params = relay_ctrl.config_get()
+    sn = board_params.get("unit_sn")
+    if sn == args.unit_sn:
+        print("Board serial number already set")
+        return 0
 
-    # Test each relay
-    for relay_num in range(1, 9):
-        sleep(0.4)
-        print(f"Turn on relay {relay_num}")
-        relay_ctrl.set_relay(relay_num, True)
+    print(f"Set board serial number to {args.unit_sn}")
+    relay_ctrl.config_set({'unit_sn': args.unit_sn})
+    board_params = relay_ctrl.config_get()
+    sn = board_params.get("unit_sn")
+    if sn == args.unit_sn:
+        return 0
 
-        sleep(0.4)
-        print(f"Turn off relay {relay_num}")
-        relay_ctrl.set_relay(relay_num, False)
-
-    return 0
+    print("Failed to set serial number")
+    return 1
 
 if __name__ == "__main__":
     ret: int = main()

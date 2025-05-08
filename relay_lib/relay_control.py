@@ -1,7 +1,7 @@
 from test_comm import testerApi
-from gpio_control import gpioControl
+from relay_lib.board_control import boardControl
 
-class relayControl(gpioControl):
+class relayControl(boardControl):
     '''Control the relay board'''
     def __init__(self, fix_api:testerApi) -> None:
 

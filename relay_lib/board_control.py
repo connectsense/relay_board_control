@@ -1,6 +1,6 @@
 from test_comm import testerApi
 
-class gpioControl:
+class boardControl:
     '''
     Communicate with the fixture CPU to set and get IO pin states
     '''
@@ -25,6 +25,25 @@ class gpioControl:
                 return False
         return True
 
+    def config_set(self, params:dict, dbug:bool=False) -> bool:
+        '''
+        Set the board configuration
+
+        Parameters
+          params - dictionary {"unit_sn": "BOARD_SN", "tty_sn": "FTDI_SN"}
+
+          BOARD_SN is the serial number to assign to the board
+          FTDI_SN is the serial number of a FTDI module (if present) on the board
+
+          If the board in question does not have a FTDI module, don't include tty_sn
+          in the dictionary.
+        '''
+        return self.fix_api.command_no_resp("nvs-set", params=params, dbug=dbug)
+
+    def config_get(self, dbug:bool=False) -> dict|None:
+        '''Get controller stored parameters'''
+        return self.fix_api.command("nvs-get", dbug=dbug)
+    
     #
     # CPU GPIO primatives
     # Higher-level functions will build on these

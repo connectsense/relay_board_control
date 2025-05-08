@@ -5,8 +5,11 @@ The board hardware is controlled by an ESP32-S3 DevKit module running firmware p
 
 This repo provides libraries supporting control of the board relays, connecting to Wi-Fi access points, and communicating a test API running on target hardware.
 
+## board firmware
+This firmware is built for the ESP32-S3 DevKitC-N16R8 module which is currently used in the relay board fixture and will eventually be part of the GRID45 Gang Programmer fixture.
+
 ## relay_lib
-Libraries for the relay board
+A Python package of libraries for the relay board
 
 ### app_utils.py
 General application support functions
@@ -14,8 +17,8 @@ General application support functions
 - get_usb_sn : Return list of serial numbers of USB comm ports matching vendor and product id criteria
 - compare_versions : Compare two version strings and return an indicator if one if lower, higher, or equal to the other
 
-### gpio_control.py
-class gpioControl<br/>
+### board_control.py
+class boardControl<br/>
 Communicates with the GPIO command handler in the board firmware to configure, read, and write GPIO pins. A mapping mechanism is provided so GPIOs can be assigned descriptive names and referenced so.
 
 When the class is instantiated, it must be passed the instance of the testerApi (see test_comm.py) and the GPIO map. The map is a list of dictionaries, one dictionary for each GPIO pin. The dictionary form is:
@@ -26,10 +29,16 @@ When the class is instantiated, it must be passed the instance of the testerApi 
 - DIR is "in" or "out" per the desired IO direction
 - active_hi is True if the input or output is considered active when the IO is set to 1, False otherwise
 
+The board firmware stores some parameters in its non-volatile storage
+- unit_sn : serial number string for the board. Used to identify boards if a script is written to control mulitple boards.
+- tty_sn : serial number of FTDI serial board (if any). Not used for the relay board, but will be used in the GRID45 gang programmer to match the board with its associated serial ports.
+
 class methods
 - initialize : configure the IO pin directions and set outputs to inactive state. Call this before using any other method
 - gpio_set : set the state of the named output pin
 - gpio_get : return True if the input is active
+- config_set : Set board configuration
+- config_get : Read board configuration
 
 ### http_api.py
 class httpAPI<br/>
